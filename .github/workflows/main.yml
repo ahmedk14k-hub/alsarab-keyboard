@@ -31,6 +31,11 @@ jobs:
             echo "PROJ=$(dirname "$S")" >> "$GITHUB_ENV"
           fi
 
+      - name: Make R ids constants (needed by switch/case)
+        run: |
+          grep -q 'android.nonFinalResIds' "$PROJ/gradle.properties" || echo 'android.nonFinalResIds=false' >> "$PROJ/gradle.properties"
+          cat "$PROJ/gradle.properties"
+
       - name: Build debug APK
         run: |
           set -o pipefail
@@ -42,7 +47,7 @@ jobs:
       - name: Summarize errors
         if: failure()
         run: |
-          grep -E "error:|ERROR:|What went wrong" "$GITHUB_WORKSPACE/build.log" | sort -u | head -40 | while IFS= read -r l; do echo "::error::$l"; done
+          grep -E "error:|ERROR:" "$GITHUB_WORKSPACE/build.log" | sed -E 's#^.*/app/src/main/##' | sort -u | head -40 | while IFS= read -r l; do echo "::error::$l"; done
 
       - uses: actions/upload-artifact@v4
         with:
